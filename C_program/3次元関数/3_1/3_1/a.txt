@@ -1,0 +1,147 @@
+#include<stdio.h>
+#include<math.h>
+#include <windows.h>
+
+double px,py;
+double pi = atan(1.0) * 4.0;
+double b(double,double);
+void d(HDC,int,double,int);
+void plot_line(HDC,double,double);
+
+void dragon(HDC hdc){
+	int i,j;
+	double X,Y,Z;
+	for(i=0;i<=39;i++){
+		Y=(30.0/40.0)*i-15.0;
+		for(j=0;j<=559;j++){
+			X=(36.0/560.0)*j-18.0;
+			Z=b(X,Y)*100.0;
+			d(hdc,j,Z,i);
+		}
+	}
+}
+
+double b(double x,double y){
+	int n=2;
+	return cos(sqrt(pow(x,n)+pow(y,n)))/exp(sqrt(pow(x,n)+pow(y,n))/7);
+}
+
+void d(HDC hdc,int j,double z,int i){
+	int m;
+	double px,py;
+	double ymax[640],ymin[640];
+	px=(double)j+2*i;
+	py=300.0-z-(i*5);
+	for(m=0;m<640;m++){
+		ymin[m]=0;
+		ymax[m]=400;
+	}
+	if(j==0){
+		MoveToEx(hdc, px, py, NULL);
+	}
+	if(py<ymax[j+i]){
+		ymax[j+i]=py;
+		LineTo(hdc,px,py);
+	}
+		if(py>ymin[j+i]){
+		ymin[j+i]=py;
+		LineTo(hdc,px,py);
+	}else{
+		MoveToEx(hdc, px, py, NULL);
+	}
+}
+
+void plot_line(HDC hdc, double length, double angle)
+{
+	struct	tagPOINT pos;
+	int		gx, gy;
+
+	GetCurrentPositionEx(hdc, &pos);
+	gx = pos.x + (int)(length * cos(angle));
+	gy = pos.y - (int)(length * sin(angle));
+	LineTo(hdc, gx, gy);
+}
+LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage,
+						 WPARAM wParam, LPARAM IParam)
+{
+	HDC		hdc;		// デバイスコンテキストのハンドラ
+	PAINTSTRUCT ps;		// BeginPaint 関数の引数で使用する
+	HPEN	hpen_old;	// ペン・ハンドルの保存用
+	HPEN	pen1;		// 論理ペン・ハンドル
+
+	pen1 = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+					    // 論理ペンの作成(形状・太さ・色)
+	switch (iMessage) {
+	  case WM_PAINT:
+		hdc = BeginPaint(hWnd, &ps);	// BeginPaint の開始
+		hpen_old = (struct HPEN__ *)SelectObject(hdc, pen1);
+					    // HPEN の後は_が２つ; pen1 の選択
+
+
+		dragon(hdc);
+
+
+		SelectObject(hdc, hpen_old);	// ペンの解放
+		EndPaint(hWnd, &ps);			// BeginPaint の終了
+		DeleteObject(pen1);				// 論理ペンの削除
+		break;
+
+	  case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	  default:
+		return DefWindowProc(hWnd, iMessage, wParam, IParam);
+	}
+	return 0;
+}
+
+LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
+
+int WINAPI WinMain( HINSTANCE hInstance,HINSTANCE hPrevInstance,
+                    LPSTR lpszCmdLine,int nCmdShow)   
+{
+  MSG        msg;
+  HWND       hWnd;
+  WNDCLASSEX wc;  // 新しく作るウィンドウ・クラス
+  
+  wc.style        =0; 
+  wc.lpfnWndProc  =WndProc; // ウィンドウ・プロシージャ
+  wc.cbClsExtra   =0; 
+  wc.cbWndExtra   =0; 
+  wc.cbSize       =sizeof(WNDCLASSEX);
+  wc.hInstance    =hInstance; 
+  wc.hIcon        =LoadIcon(NULL, IDI_APPLICATION );
+  wc.hIconSm      =LoadIcon(NULL, IDI_WINLOGO );
+  wc.hCursor      =LoadCursor(NULL,IDC_ARROW); 
+  wc.hbrBackground=(struct HBRUSH__ *)GetStockObject(WHITE_BRUSH);
+           // HBRUSHの後は_が２つ；　クラス・ウィンドウ背景ブラシ 
+  wc.lpszMenuName =NULL;    // クラス・メニュー・リソース名
+  wc.lpszClassName="ice";   // ウィンドウ・クラス名
+  
+  if(!RegisterClassEx(&wc))return 0; 
+                            // ウィンドウ・クラス登録失敗/
+  hWnd=CreateWindow(        // ウィンドウ生成 
+    wc.lpszClassName,       // ウィンドウ・クラス名
+    "Windows example",      // ウィンドウ名 
+    WS_OVERLAPPEDWINDOW,    // ウィンドウ・スタイル 
+    CW_USEDEFAULT,          // ウィンドウ表示X位置（既定:0）
+    CW_USEDEFAULT,          // ウィンドウ表示Y位置（既定:0）
+    640,                    // ウィンドウXサイズ[dot]
+    400,                    // ウィンドウYサイズ[dot]
+    NULL,                   // 親ウィンドウ・ハンドル
+    NULL,                   // メニューハンドル  
+    wc.hInstance,  
+    NULL);          
+
+  ShowWindow(hWnd,SW_SHOWDEFAULT); // ウィンドウ表示状態設定
+  UpdateWindow(hWnd); 
+
+  while(GetMessage(&msg,NULL,0,0)) // メッセージ取得（すべて）
+  {
+    TranslateMessage( &msg ); 
+    DispatchMessage(&msg); 
+	             // ウィンドウ・プロシージャにメッセージを送出 
+  }
+  return 0;
+}

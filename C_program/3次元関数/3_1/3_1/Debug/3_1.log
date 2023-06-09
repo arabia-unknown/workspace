@@ -1,0 +1,7 @@
+﻿  Source.cpp
+h:\c_program\3次元関数\3_1\3_1\source.cpp(52): warning C4244: '引数': 'double' から 'int' への変換です。データが失われる可能性があります。
+h:\c_program\3次元関数\3_1\3_1\source.cpp(58): warning C4244: '引数': 'double' から 'int' への変換です。データが失われる可能性があります。
+h:\c_program\3次元関数\3_1\3_1\source.cpp(64): warning C4244: '引数': 'double' から 'int' への変換です。データが失われる可能性があります。
+h:\c_program\3次元関数\3_1\3_1\source.cpp(69): warning C4244: '引数': 'double' から 'int' への変換です。データが失われる可能性があります。
+  3_1.vcxproj -> H:\c_program\3次元関数\3_1\Debug\3_1.exe
+  3_1.vcxproj -> H:\c_program\3次元関数\3_1\Debug\3_1.pdb (Partial PDB)

@@ -1,0 +1,138 @@
+#include <windows.h>
+#include <math.h>
+double gensui(double x,double y)
+{
+	double z;
+	z=cos(sqrt((x*x)+(y*y)))/exp(sqrt((x*x)+(y*y))/7.0);
+	return z;
+}
+LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage,
+						 WPARAM wParam, LPARAM IParam)
+{
+	HDC		hdc;		// デバイスコンテキストのハンドラ
+	PAINTSTRUCT ps;		// BeginPaint 関数の引数で使用する
+	HPEN	hpen_old;	// ペン・ハンドルの保存用
+	HPEN	pen1;		// 論理ペン・ハンドル
+		int		i,j;
+	double	X,Y,Z,px=0.0,py=0.0;
+	double	yMAX[640],yMIN[640];
+
+		for(i=0;i<640;i++){
+		yMAX[i]=400;
+		yMIN[i]=0;
+	}
+
+
+	pen1 = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+					    // 論理ペンの作成(形状・太さ・色)
+	switch (iMessage) {
+	  case WM_PAINT:
+		hdc = BeginPaint(hWnd, &ps);	// BeginPaint の開始
+		hpen_old = (struct HPEN__ *)SelectObject(hdc, pen1);
+					    // HPEN の後は_が２つ; pen1 の選択
+
+
+for(i=0;i<=40;i++){
+			Y=0.75*i-15.0;				//3次元のY座標を求める式
+
+			for(j=0;j<=560;j++){
+				X=(36.0/560.0)*j-18.0;	//3次元のX座標を求める式
+				Z=100.0*gensui(X,Y);	//3次元のZ座標を求める式
+
+				px=(X+18.0)*(17.75)+(i*2.0);
+				//3次元のX座標を2次元のx座標に変える式
+				//+(i*2.0)は描画開始座標を右方向へ移動
+
+				py=300.0-Z-(i*5.0);
+				//3次元のZ座標を2次元のy座標に変える式
+				//-(i*5.0)は描画開始座標を上方向へ移動
+
+				if(j==0){
+					MoveToEx(hdc,px,py,NULL);
+					//不要線を無視した後のペンの位置取得
+				}
+
+				if(yMAX[j+i]>py){
+					yMAX[j+i]=py;
+					LineTo(hdc,px,py);
+					//終端のy座標がymaxより小さいときの描画
+				}
+
+				if(yMIN[j+i]<py){
+					yMIN[j+i]=py;
+					LineTo(hdc,px,py);
+					//終端のy座標がyminより大きいときの描画
+				}
+
+				else{
+					MoveToEx(hdc,px,py,NULL);
+					//陰線処理を行った後のペンの位置取得
+				}
+			}
+		}
+
+
+		SelectObject(hdc, hpen_old);	// ペンの解放
+		EndPaint(hWnd, &ps);			// BeginPaint の終了
+		DeleteObject(pen1);				// 論理ペンの削除
+		break;
+
+	  case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	  default:
+		return DefWindowProc(hWnd, iMessage, wParam, IParam);
+	}
+	return 0;
+}
+
+LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
+
+int WINAPI WinMain( HINSTANCE hInstance,HINSTANCE hPrevInstance,
+                    LPSTR lpszCmdLine,int nCmdShow)   
+{
+  MSG        msg;
+  HWND       hWnd;
+  WNDCLASSEX wc;  // 新しく作るウィンドウ・クラス
+  
+  wc.style        =0; 
+  wc.lpfnWndProc  =WndProc; // ウィンドウ・プロシージャ
+  wc.cbClsExtra   =0; 
+  wc.cbWndExtra   =0; 
+  wc.cbSize       =sizeof(WNDCLASSEX);
+  wc.hInstance    =hInstance; 
+  wc.hIcon        =LoadIcon(NULL, IDI_APPLICATION );
+  wc.hIconSm      =LoadIcon(NULL, IDI_WINLOGO );
+  wc.hCursor      =LoadCursor(NULL,IDC_ARROW); 
+  wc.hbrBackground=(struct HBRUSH__ *)GetStockObject(WHITE_BRUSH);
+           // HBRUSHの後は_が２つ；　クラス・ウィンドウ背景ブラシ 
+  wc.lpszMenuName =NULL;    // クラス・メニュー・リソース名
+  wc.lpszClassName="ice";   // ウィンドウ・クラス名
+  
+  if(!RegisterClassEx(&wc))return 0; 
+                            // ウィンドウ・クラス登録失敗/
+  hWnd=CreateWindow(        // ウィンドウ生成 
+    wc.lpszClassName,       // ウィンドウ・クラス名
+    "Windows example",      // ウィンドウ名 
+    WS_OVERLAPPEDWINDOW,    // ウィンドウ・スタイル 
+    CW_USEDEFAULT,          // ウィンドウ表示X位置（既定:0）
+    CW_USEDEFAULT,          // ウィンドウ表示Y位置（既定:0）
+    640,                    // ウィンドウXサイズ[dot]
+    400,                    // ウィンドウYサイズ[dot]
+    NULL,                   // 親ウィンドウ・ハンドル
+    NULL,                   // メニューハンドル  
+    wc.hInstance,  
+    NULL);          
+
+  ShowWindow(hWnd,SW_SHOWDEFAULT); // ウィンドウ表示状態設定
+  UpdateWindow(hWnd); 
+
+  while(GetMessage(&msg,NULL,0,0)) // メッセージ取得（すべて）
+  {
+    TranslateMessage( &msg ); 
+    DispatchMessage(&msg); 
+	             // ウィンドウ・プロシージャにメッセージを送出 
+  }
+  return 0;
+}
